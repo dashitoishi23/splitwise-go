@@ -1,0 +1,1 @@
+module github.com/dashitoishi23/splitwise-go
