@@ -28,6 +28,13 @@ func NewHttpHandler(endpoints splitendpoints.Set) []commonmodels.HttpServerConfi
 		serverOptions...,
 	)
 
+	howMuchOthersOweToMeHandler := *httptransport.NewServer(
+		endpoints.HowMuchOthersOweToMeEndpoint,
+		util.DecodeHTTPGenericRequest[splitendpoints.HowMuchIOweRequest],
+		util.EncodeHTTPGenericResponse,
+		serverOptions...,
+	)
+
 	splitServers = append(splitServers, commonmodels.HttpServerConfig{
 		Server:  &saveTransactionHandler,
 		Route:   "/save_the_transaction",
@@ -35,6 +42,10 @@ func NewHttpHandler(endpoints splitendpoints.Set) []commonmodels.HttpServerConfi
 	}, commonmodels.HttpServerConfig{
 		Server:  &howMuchIOweHandler,
 		Route:   "/how_much_i_owe",
+		Methods: []string{"POST"},
+	}, commonmodels.HttpServerConfig{
+		Server:  &howMuchOthersOweToMeHandler,
+		Route:   "/how_much_others_owe_to_me",
 		Methods: []string{"POST"},
 	})
 

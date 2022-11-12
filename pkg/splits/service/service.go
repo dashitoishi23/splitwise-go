@@ -30,8 +30,10 @@ func NewSplitService(client *mongo.Client) SplitService {
 
 func (s *splitService) SaveTheTransaction(ctx context.Context, transaction splitmodels.Transaction) error {
 	for idx := range transaction.Split {
-		transaction.Split[idx].PaymentStatus = splitmodels.Pending
+		transaction.Split[idx].PaymentStatus = splitmodels.Pending.String()
 	}
+
+	transaction.OverallPaymentStatus = splitmodels.Pending.String()
 
 	_, err := s.db.InsertOne(ctx, transaction)
 
@@ -45,7 +47,7 @@ func (s *splitService) SaveTheTransaction(ctx context.Context, transaction split
 func (s *splitService) HowMuchIOwe(ctx context.Context, MobileNumber string) ([]splitmodels.Debt, error) {
 	var debts []splitmodels.Transaction
 	var owedTransactions []splitmodels.Debt
-	cursor, err := s.db.Find(ctx, bson.M{"spentBy.mobile": bson.M{"$ne": MobileNumber},
+	cursor, err := s.db.Find(ctx, bson.M{"spentby.mobile": bson.M{"$ne": MobileNumber},
 		"split.mobile": MobileNumber, "split.paymentstatus": splitmodels.Pending})
 
 	if err != nil {
@@ -73,7 +75,7 @@ func (s *splitService) HowMuchIOwe(ctx context.Context, MobileNumber string) ([]
 			SpentBy:       debt.SpentBy,
 			Npeople:       debt.NPeople,
 			MyShare:       debt.Split[idx].ShareAmount,
-			PaymentStatus: debt.Split[idx].PaymentStatus.String(),
+			PaymentStatus: debt.Split[idx].PaymentStatus,
 		})
 	}
 
@@ -82,17 +84,20 @@ func (s *splitService) HowMuchIOwe(ctx context.Context, MobileNumber string) ([]
 }
 
 func (s *splitService) HowMuchOthersOweToMe(ctx context.Context, MobileNumber string) ([]splitmodels.Transaction, error) {
-	cursor, err := s.db.Find(ctx, bson.M{"spentBy": bson.M{"mobile": MobileNumber}})
+	var debts []splitmodels.Transaction
+	cursor, err := s.db.Find(ctx, bson.M{"spentby.mobile": MobileNumber, "overallpaymentstatus": splitmodels.Pending.String()})
 
 	if err != nil {
 		return nil, err
 	}
 
-	var owedTransactions []splitmodels.Transaction
-
-	if err := cursor.All(ctx, &owedTransactions); err != nil {
+	if err := cursor.All(ctx, &debts); err != nil {
 		return nil, err
 	}
 
-	return owedTransactions, nil
+	if len(debts) == 0 {
+		return nil, errors.New(util.DEBT_NOT_FOUND)
+	}
+
+	return debts, nil
 }

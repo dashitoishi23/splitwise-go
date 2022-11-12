@@ -8,8 +8,9 @@ import (
 )
 
 type Set struct {
-	SaveTheTransactionEndpoint endpoint.Endpoint
-	HowMuchIOweEndpoint        endpoint.Endpoint
+	SaveTheTransactionEndpoint   endpoint.Endpoint
+	HowMuchIOweEndpoint          endpoint.Endpoint
+	HowMuchOthersOweToMeEndpoint endpoint.Endpoint
 }
 
 func New(svc splitservice.SplitService) Set {
@@ -23,9 +24,15 @@ func New(svc splitservice.SplitService) Set {
 		howMuchIOweEndpoint = HowMuchIOweEndpoint(svc)
 	}
 
+	var howMuchOthersOweToMeEndpoint endpoint.Endpoint
+	{
+		howMuchOthersOweToMeEndpoint = HowMuchOthersOweToMeEndpoint(svc)
+	}
+
 	return Set{
-		SaveTheTransactionEndpoint: saveTheTransactionEndpoint,
-		HowMuchIOweEndpoint:        howMuchIOweEndpoint,
+		SaveTheTransactionEndpoint:   saveTheTransactionEndpoint,
+		HowMuchIOweEndpoint:          howMuchIOweEndpoint,
+		HowMuchOthersOweToMeEndpoint: howMuchOthersOweToMeEndpoint,
 	}
 }
 
@@ -47,5 +54,15 @@ func HowMuchIOweEndpoint(svc splitservice.SplitService) endpoint.Endpoint {
 		res, err := svc.HowMuchIOwe(context.TODO(), req.MobileNumber)
 
 		return HowMuchIOweResponse{res, err}, err
+	}
+}
+
+func HowMuchOthersOweToMeEndpoint(svc splitservice.SplitService) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		req := request.(HowMuchIOweRequest)
+
+		res, err := svc.HowMuchOthersOweToMe(context.TODO(), req.MobileNumber)
+
+		return HowMuchOthersOweToMeResponse{res, err}, err
 	}
 }

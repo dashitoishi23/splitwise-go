@@ -24,3 +24,14 @@ type HowMuchIOweResponse struct {
 }
 
 func (h *HowMuchIOweResponse) Failed() error { return h.Err }
+
+type HowMuchOthersOweToMeRequest struct {
+	MobileNumber string `json:"mobileNumber"`
+}
+
+type HowMuchOthersOweToMeResponse struct {
+	Transactions []splitmodels.Transaction `json:"transactions"`
+	Err          error                     `json:"-"`
+}
+
+func (h *HowMuchOthersOweToMeResponse) Failed() error { return h.Err }
