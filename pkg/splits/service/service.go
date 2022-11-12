@@ -16,17 +16,17 @@ type SplitService interface {
 }
 
 type splitService struct {
-	db *mongo.Database
+	db *mongo.Collection
 }
 
 func NewSplitService(client *mongo.Client) SplitService {
 	return &splitService{
-		db: client.Database("ExpenseSharing"),
+		db: client.Database("ExpenseSharing").Collection("Transaction"),
 	}
 }
 
 func (s *splitService) SaveTheTransaction(ctx context.Context, transaction splitmodels.Transaction) error {
-	_, err := s.db.Collection("Transactions").InsertOne(ctx, transaction)
+	_, err := s.db.InsertOne(ctx, transaction)
 
 	if err != nil {
 		return err
@@ -36,20 +36,18 @@ func (s *splitService) SaveTheTransaction(ctx context.Context, transaction split
 }
 
 func (s *splitService) HowMuchIOwe(ctx context.Context, MobileNumber string) ([]splitmodels.Debt, error) {
-	cursor, err := s.db.Collection("Transactions").Find(ctx, bson.M{"spentBy": bson.M{"mobile": bson.M{"$ne": MobileNumber},
+	var debts []splitmodels.Debt
+	cursor, err := s.db.Find(ctx, bson.M{"spentBy": bson.M{"mobile": bson.M{"$ne": MobileNumber},
 		"split": MobileNumber}})
 
 	if err != nil {
 		return nil, err
 	}
 
-	var debts []splitmodels.Debt
-
-	for cursor.Next(context.TODO()) {
-		var result bson.D
-
-		if err := cursor.Decode(&result); err != nil {
-			return nil, err
-		}
+	if err := cursor.All(ctx, &debts); err != nil {
+		return nil, err
 	}
+
+	return debts, nil
+
 }
