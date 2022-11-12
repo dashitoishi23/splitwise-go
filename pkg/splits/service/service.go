@@ -2,15 +2,18 @@ package splits
 
 import (
 	"context"
+	"errors"
 
 	splitmodels "github.com/dashitoishi23/splitwise-go/pkg/splits/models"
+	"github.com/dashitoishi23/splitwise-go/util"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"golang.org/x/exp/slices"
 )
 
 type SplitService interface {
 	SaveTheTransaction(ctx context.Context, transaction splitmodels.Transaction) error
-	HowMuchIOwe(ctx context.Context, MobileNumer string) ([]splitmodels.Transaction, error)
+	HowMuchIOwe(ctx context.Context, MobileNumer string) ([]splitmodels.Debt, error)
 	HowMuchOthersOweToMe(ctx context.Context, MobileNumber string) ([]splitmodels.Transaction, error)
 	// ChangePaymentStatus(ctx context.Context, MobileNumber string) (bool, error)
 }
@@ -35,10 +38,11 @@ func (s *splitService) SaveTheTransaction(ctx context.Context, transaction split
 	return nil
 }
 
-func (s *splitService) HowMuchIOwe(ctx context.Context, MobileNumber string) ([]splitmodels.Transaction, error) {
+func (s *splitService) HowMuchIOwe(ctx context.Context, MobileNumber string) ([]splitmodels.Debt, error) {
 	var debts []splitmodels.Transaction
-	cursor, err := s.db.Find(ctx, bson.M{"spentBy": bson.M{"mobile": bson.M{"$ne": MobileNumber},
-		"split": MobileNumber}})
+	var owedTransactions []splitmodels.Debt
+	cursor, err := s.db.Find(ctx, bson.M{"spentBy.mobile": bson.M{"$ne": MobileNumber},
+		"split.mobile": MobileNumber})
 
 	if err != nil {
 		return nil, err
@@ -48,7 +52,28 @@ func (s *splitService) HowMuchIOwe(ctx context.Context, MobileNumber string) ([]
 		return nil, err
 	}
 
-	return debts, nil
+	if len(debts) == 0 {
+		return nil, errors.New(util.DEBT_NOT_FOUND)
+	}
+
+	for _, debt := range debts {
+		idx := slices.IndexFunc(debt.Split, func(t splitmodels.Split) bool { return t.Mobile == MobileNumber })
+
+		if idx == -1 {
+			return nil, errors.New(util.DEBT_NOT_FOUND)
+		}
+		owedTransactions = append(owedTransactions, splitmodels.Debt{
+			TotalAmount:   debt.TotalAmount,
+			Place:         debt.Place,
+			Date:          debt.Date,
+			SpentBy:       debt.SpentBy,
+			Npeople:       debt.NPeople,
+			MyShare:       debt.Split[idx].ShareAmount,
+			PaymentStatus: debt.Split[idx].PaymentStatus.String(),
+		})
+	}
+
+	return owedTransactions, nil
 
 }
 

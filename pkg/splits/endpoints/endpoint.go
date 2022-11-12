@@ -9,6 +9,7 @@ import (
 
 type Set struct {
 	SaveTheTransactionEndpoint endpoint.Endpoint
+	HowMuchIOweEndpoint        endpoint.Endpoint
 }
 
 func New(svc splitservice.SplitService) Set {
@@ -17,8 +18,14 @@ func New(svc splitservice.SplitService) Set {
 		saveTheTransactionEndpoint = SaveTheTransactionEndpoint(svc)
 	}
 
+	var howMuchIOweEndpoint endpoint.Endpoint
+	{
+		howMuchIOweEndpoint = HowMuchIOweEndpoint(svc)
+	}
+
 	return Set{
 		SaveTheTransactionEndpoint: saveTheTransactionEndpoint,
+		HowMuchIOweEndpoint:        howMuchIOweEndpoint,
 	}
 }
 
@@ -30,5 +37,15 @@ func SaveTheTransactionEndpoint(svc splitservice.SplitService) endpoint.Endpoint
 		res := svc.SaveTheTransaction(context.TODO(), req.Transaction)
 
 		return SaveTheTransactionResponse{res}, res
+	}
+}
+
+func HowMuchIOweEndpoint(svc splitservice.SplitService) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		req := request.(HowMuchIOweRequest)
+
+		res, err := svc.HowMuchIOwe(context.TODO(), req.MobileNumber)
+
+		return HowMuchIOweResponse{res, err}, err
 	}
 }

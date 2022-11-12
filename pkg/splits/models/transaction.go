@@ -7,7 +7,7 @@ import (
 type Transaction struct {
 	Identifier           string        `json:"identifier"`
 	Place                string        `json:"place"`
-	TotalAmount          int           `json:"totalAmount"`
+	TotalAmount          float64       `json:"totalAmount"`
 	Date                 string        `json:"date"`
 	SpentBy              SpentBy       `json:"spentBy"`
 	NPeople              int           `json:"nPeople"`

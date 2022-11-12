@@ -7,9 +7,18 @@ import (
 )
 
 func ErrorEncoder(_ context.Context, err error, w http.ResponseWriter) {
-	w.WriteHeader(http.StatusInternalServerError)
+	w.WriteHeader(getHeader(err.Error()))
 
 	json.NewEncoder(w).Encode(errorWrapper{Error: err.Error()})
+}
+
+func getHeader(errMsg string) int {
+	switch errMsg {
+	case DEBT_NOT_FOUND:
+		return http.StatusNotFound
+	default:
+		return http.StatusInternalServerError
+	}
 }
 
 type errorWrapper struct {

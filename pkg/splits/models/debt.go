@@ -1,13 +1,13 @@
 package splitmodels
 
 type Debt struct {
-	TotalAmount   float64       `json:"floatAmount"`
-	Place         string        `json:"place"`
-	Date          string        `json:"date"`
-	SpentBy       SpentBy       `json:"spentBy"`
-	Npeople       int           `json:"nPeople"`
-	MyShare       float64       `json:"myShare"`
-	PaymentStatus PaymentStatus `json:"paymentStatus"`
+	TotalAmount   float64 `json:"floatAmount"`
+	Place         string  `json:"place"`
+	Date          string  `json:"date"`
+	SpentBy       SpentBy `json:"spentBy"`
+	Npeople       int     `json:"nPeople"`
+	MyShare       float64 `json:"myShare"`
+	PaymentStatus string  `json:"paymentStatus"`
 }
 
 type PaymentStatus int64
