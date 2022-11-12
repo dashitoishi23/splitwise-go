@@ -29,6 +29,10 @@ func NewSplitService(client *mongo.Client) SplitService {
 }
 
 func (s *splitService) SaveTheTransaction(ctx context.Context, transaction splitmodels.Transaction) error {
+	for idx := range transaction.Split {
+		transaction.Split[idx].PaymentStatus = splitmodels.Pending
+	}
+
 	_, err := s.db.InsertOne(ctx, transaction)
 
 	if err != nil {
@@ -42,7 +46,7 @@ func (s *splitService) HowMuchIOwe(ctx context.Context, MobileNumber string) ([]
 	var debts []splitmodels.Transaction
 	var owedTransactions []splitmodels.Debt
 	cursor, err := s.db.Find(ctx, bson.M{"spentBy.mobile": bson.M{"$ne": MobileNumber},
-		"split.mobile": MobileNumber})
+		"split.mobile": MobileNumber, "split.paymentstatus": splitmodels.Pending})
 
 	if err != nil {
 		return nil, err
