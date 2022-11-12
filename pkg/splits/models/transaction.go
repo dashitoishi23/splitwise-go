@@ -1,20 +1,18 @@
 package splitmodels
 
 import (
-	"time"
-
 	"github.com/google/uuid"
 )
 
 type Transaction struct {
-	Identifier           string        `bson:"identifier"`
-	Place                string        `bson:"place"`
-	TotalAmount          int           `bson:"totalAmount"`
-	Date                 time.Time     `bson:"date"`
-	SpentBy              SpentBy       `bson:"spentBy"`
-	NPeople              int           `bson:"nPeople"`
-	Split                []Split       `bson:"split"`
-	OverallPaymentStatus PaymentStatus `bson:"overallPaymentStatus"`
+	Identifier           string        `json:"identifier"`
+	Place                string        `json:"place"`
+	TotalAmount          int           `json:"totalAmount"`
+	Date                 string        `json:"date"`
+	SpentBy              SpentBy       `json:"spentBy"`
+	NPeople              int           `json:"nPeople"`
+	Split                []Split       `json:"split"`
+	OverallPaymentStatus PaymentStatus `json:"overallPaymentStatus"`
 }
 
 func (t *Transaction) InitFields() {

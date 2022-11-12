@@ -13,5 +13,15 @@ func OpenDBConnection() (*mongo.Client, error) {
 
 	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(database))
 
+	if err != nil {
+		return nil, err
+	}
+
+	// defer func() {
+	// 	if err := client.Disconnect(context.TODO()); err != nil {
+	// 		panic(err)
+	// 	}
+	// }()
+
 	return client, err
 }

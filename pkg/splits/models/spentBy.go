@@ -1,6 +1,6 @@
 package splitmodels
 
 type SpentBy struct {
-	Mobile string `bson:"mobile"`
-	Name   string `bson:"name"`
+	Mobile string `json:"mobile"`
+	Name   string `json:"name"`
 }

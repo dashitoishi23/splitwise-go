@@ -1,8 +1,8 @@
 package splitmodels
 
 type Split struct {
-	Mobile        string        `bson:"mobile"`
-	Name          string        `bson:"string"`
-	ShareAmount   string        `bson:"shareAmount"`
-	PaymentStatus PaymentStatus `bson:"paymentStatus"`
+	Mobile        string        `json:"mobile"`
+	Name          string        `json:"name"`
+	ShareAmount   float64       `json:"shareAmount"`
+	PaymentStatus PaymentStatus `json:"paymentStatus"`
 }
