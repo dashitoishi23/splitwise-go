@@ -10,9 +10,9 @@ import (
 
 type SplitService interface {
 	SaveTheTransaction(ctx context.Context, transaction splitmodels.Transaction) error
-	HowMuchIOwe(ctx context.Context, MobileNumer string) ([]splitmodels.Debt, error)
+	HowMuchIOwe(ctx context.Context, MobileNumer string) ([]splitmodels.Transaction, error)
 	HowMuchOthersOweToMe(ctx context.Context, MobileNumber string) ([]splitmodels.Transaction, error)
-	ChangePaymentStatus(ctx context.Context, MobileNumber string) (bool, error)
+	// ChangePaymentStatus(ctx context.Context, MobileNumber string) (bool, error)
 }
 
 type splitService struct {
@@ -35,8 +35,8 @@ func (s *splitService) SaveTheTransaction(ctx context.Context, transaction split
 	return nil
 }
 
-func (s *splitService) HowMuchIOwe(ctx context.Context, MobileNumber string) ([]splitmodels.Debt, error) {
-	var debts []splitmodels.Debt
+func (s *splitService) HowMuchIOwe(ctx context.Context, MobileNumber string) ([]splitmodels.Transaction, error) {
+	var debts []splitmodels.Transaction
 	cursor, err := s.db.Find(ctx, bson.M{"spentBy": bson.M{"mobile": bson.M{"$ne": MobileNumber},
 		"split": MobileNumber}})
 
@@ -50,4 +50,20 @@ func (s *splitService) HowMuchIOwe(ctx context.Context, MobileNumber string) ([]
 
 	return debts, nil
 
+}
+
+func (s *splitService) HowMuchOthersOweToMe(ctx context.Context, MobileNumber string) ([]splitmodels.Transaction, error) {
+	cursor, err := s.db.Find(ctx, bson.M{"spentBy": bson.M{"mobile": MobileNumber}})
+
+	if err != nil {
+		return nil, err
+	}
+
+	var owedTransactions []splitmodels.Transaction
+
+	if err := cursor.All(ctx, &owedTransactions); err != nil {
+		return nil, err
+	}
+
+	return owedTransactions, nil
 }
