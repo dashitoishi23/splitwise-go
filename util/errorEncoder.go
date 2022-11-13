@@ -16,6 +16,8 @@ func getHeader(errMsg string) int {
 	switch errMsg {
 	case DEBT_NOT_FOUND:
 		return http.StatusNotFound
+	case TRANSACTION_NOT_FOUND:
+		return http.StatusNotFound
 	default:
 		return http.StatusInternalServerError
 	}

@@ -35,6 +35,13 @@ func NewHttpHandler(endpoints splitendpoints.Set) []commonmodels.HttpServerConfi
 		serverOptions...,
 	)
 
+	changePaymentStatusHandler := *httptransport.NewServer(
+		endpoints.ChangePaymentStatusEndpoint,
+		util.DecodeHTTPGenericRequest[splitendpoints.ChangePaymentStatusRequest],
+		util.EncodeHTTPGenericResponse,
+		serverOptions...,
+	)
+
 	splitServers = append(splitServers, commonmodels.HttpServerConfig{
 		Server:  &saveTransactionHandler,
 		Route:   "/save_the_transaction",
@@ -47,6 +54,10 @@ func NewHttpHandler(endpoints splitendpoints.Set) []commonmodels.HttpServerConfi
 		Server:  &howMuchOthersOweToMeHandler,
 		Route:   "/how_much_others_owe_to_me",
 		Methods: []string{"POST"},
+	}, commonmodels.HttpServerConfig{
+		Server:  &changePaymentStatusHandler,
+		Route:   "/change_payment",
+		Methods: []string{"PUT"},
 	})
 
 	return splitServers

@@ -11,6 +11,7 @@ type Set struct {
 	SaveTheTransactionEndpoint   endpoint.Endpoint
 	HowMuchIOweEndpoint          endpoint.Endpoint
 	HowMuchOthersOweToMeEndpoint endpoint.Endpoint
+	ChangePaymentStatusEndpoint  endpoint.Endpoint
 }
 
 func New(svc splitservice.SplitService) Set {
@@ -29,10 +30,16 @@ func New(svc splitservice.SplitService) Set {
 		howMuchOthersOweToMeEndpoint = HowMuchOthersOweToMeEndpoint(svc)
 	}
 
+	var changePaymentStatusEndpoint endpoint.Endpoint
+	{
+		changePaymentStatusEndpoint = ChangePaymentStatusEndpoint(svc)
+	}
+
 	return Set{
 		SaveTheTransactionEndpoint:   saveTheTransactionEndpoint,
 		HowMuchIOweEndpoint:          howMuchIOweEndpoint,
 		HowMuchOthersOweToMeEndpoint: howMuchOthersOweToMeEndpoint,
+		ChangePaymentStatusEndpoint:  changePaymentStatusEndpoint,
 	}
 }
 
@@ -64,5 +71,15 @@ func HowMuchOthersOweToMeEndpoint(svc splitservice.SplitService) endpoint.Endpoi
 		res, err := svc.HowMuchOthersOweToMe(context.TODO(), req.MobileNumber)
 
 		return HowMuchOthersOweToMeResponse{res, err}, err
+	}
+}
+
+func ChangePaymentStatusEndpoint(svc splitservice.SplitService) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		req := request.(ChangePaymentStatusRequest)
+
+		res, err := svc.ChangePaymentStatus(context.TODO(), req.MobileNumber, req.TransactionIdentifier)
+
+		return ChangePaymentStatusResponse{res, err}, err
 	}
 }

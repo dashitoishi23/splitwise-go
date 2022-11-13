@@ -35,3 +35,15 @@ type HowMuchOthersOweToMeResponse struct {
 }
 
 func (h *HowMuchOthersOweToMeResponse) Failed() error { return h.Err }
+
+type ChangePaymentStatusRequest struct {
+	MobileNumber          string `json:"mobileNumber"`
+	TransactionIdentifier string `json:"transactionIdentifier"`
+}
+
+type ChangePaymentStatusResponse struct {
+	IsUpdated bool  `json:"isUpdated"`
+	Err       error `json:"-"`
+}
+
+func (h *ChangePaymentStatusResponse) Failed() error { return h.Err }

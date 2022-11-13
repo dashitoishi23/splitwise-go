@@ -3,6 +3,7 @@ package splits
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	splitmodels "github.com/dashitoishi23/splitwise-go/pkg/splits/models"
 	"github.com/dashitoishi23/splitwise-go/util"
@@ -15,7 +16,7 @@ type SplitService interface {
 	SaveTheTransaction(ctx context.Context, transaction splitmodels.Transaction) error
 	HowMuchIOwe(ctx context.Context, MobileNumer string) ([]splitmodels.Debt, error)
 	HowMuchOthersOweToMe(ctx context.Context, MobileNumber string) ([]splitmodels.Transaction, error)
-	// ChangePaymentStatus(ctx context.Context, MobileNumber string) (bool, error)
+	ChangePaymentStatus(ctx context.Context, MobileNumber string, TransactionIdentifier string) (bool, error)
 }
 
 type splitService struct {
@@ -47,8 +48,11 @@ func (s *splitService) SaveTheTransaction(ctx context.Context, transaction split
 func (s *splitService) HowMuchIOwe(ctx context.Context, MobileNumber string) ([]splitmodels.Debt, error) {
 	var debts []splitmodels.Transaction
 	var owedTransactions []splitmodels.Debt
-	cursor, err := s.db.Find(ctx, bson.M{"spentby.mobile": bson.M{"$ne": MobileNumber},
-		"split.mobile": MobileNumber, "split.paymentstatus": splitmodels.Pending})
+	cursor, err := s.db.Find(ctx, bson.M{"$and": []bson.M{
+		{"spentby.mobile": bson.M{"$ne": MobileNumber}},
+		{"split.mobile": MobileNumber},
+		{"split.paymentstatus": splitmodels.Pending.String()},
+	}})
 
 	if err != nil {
 		return nil, err
@@ -100,4 +104,46 @@ func (s *splitService) HowMuchOthersOweToMe(ctx context.Context, MobileNumber st
 	}
 
 	return debts, nil
+}
+
+func (s *splitService) ChangePaymentStatus(ctx context.Context, MobileNumber string, TransactionIdentifier string) (bool, error) {
+	cursor := s.db.FindOne(ctx, bson.M{"identifier": TransactionIdentifier})
+
+	if cursor.Err() != nil {
+		if cursor.Err().Error() == mongo.ErrNoDocuments.Error() {
+			return false, errors.New(util.TRANSACTION_NOT_FOUND)
+		}
+
+		return false, cursor.Err()
+	}
+
+	var existingTransaction splitmodels.Transaction
+
+	if err := cursor.Decode(&existingTransaction); err != nil {
+		return false, err
+	}
+
+	idx := slices.IndexFunc(existingTransaction.Split, func(s splitmodels.Split) bool { return s.Mobile == MobileNumber })
+
+	if idx == -1 {
+		return false, errors.New(util.DEBT_NOT_FOUND)
+	}
+
+	existingTransaction.Split[idx].PaymentStatus = splitmodels.Paid.String()
+
+	index := slices.IndexFunc(existingTransaction.Split, func(s splitmodels.Split) bool { return s.PaymentStatus == splitmodels.Pending.String() })
+
+	if index == -1 {
+		existingTransaction.OverallPaymentStatus = splitmodels.Paid.String()
+	}
+
+	updRes, err := s.db.UpdateOne(ctx, bson.M{"_id": existingTransaction.Id}, bson.M{"$set": existingTransaction})
+
+	if err != nil {
+		return false, err
+	}
+
+	fmt.Print(updRes)
+
+	return true, nil
 }
